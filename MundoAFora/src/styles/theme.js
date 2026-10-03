@@ -1,0 +1,60 @@
+import { StyleSheet } from "react-native";
+export const colors = {
+  blue: "#1463FF",
+  navy: "#102A43",
+  pale: "#E3F0FF",
+  text: "#526581",
+  bg: "#F5F8FC",
+  line: "#E4EAF2",
+};
+export const s = StyleSheet.create({
+  page: { padding: 20, paddingBottom: 32 },
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: colors.navy,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+    marginBottom: 18,
+  },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  row: { flexDirection: "row", alignItems: "center", gap: 12 },
+  label: { fontSize: 17, fontWeight: "700", color: colors.navy },
+  text: { fontSize: 15, lineHeight: 22, color: colors.text },
+  input: {
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 14,
+    padding: 14,
+    color: colors.navy,
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  section: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: colors.navy,
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  chip: {
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: colors.pale,
+    marginRight: 8,
+  },
+  chipText: { color: colors.blue, fontWeight: "600" },
+});

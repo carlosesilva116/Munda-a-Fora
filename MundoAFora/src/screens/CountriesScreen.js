@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, ScrollView, TextInput, Pressable } from "react-native";
 import { countries } from "../data/countries";
 import { s, colors } from "../styles/theme";
-import { Brand, CountryCard } from "../components/UI";
+import { Brand, CountryCard, Search } from "../components/UI";
 export default function CountriesScreen({ openCountry }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Todos");
@@ -16,15 +16,9 @@ export default function CountriesScreen({ openCountry }) {
       <Brand />
       <Text style={s.title}>Explore os países</Text>
       <Text style={s.subtitle}>
-        Conheça destinos, culturas e possibilidades.
+        Conheça destinos, culturas e oportunidades em todo o mundo.
       </Text>
-      <TextInput
-        style={s.input}
-        placeholder="Buscar um país"
-        accessibilityLabel="Buscar país no catálogo"
-        value={query}
-        onChangeText={setQuery}
-      />
+      <Search value={query} onChangeText={setQuery} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

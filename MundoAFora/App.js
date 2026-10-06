@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Image, Pressable, BackHandler } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { residents } from "./src/data/countries";
 import { colors } from "./src/styles/theme";
 import { Icon } from "./src/components/UI";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -16,7 +17,6 @@ const tabs = [
   ["países", "globe-outline", "Países"],
   ["comparar", "bar-chart-outline", "Comparar"],
   ["chat", "chatbubble-outline", "Chat"],
-  ["perfil", "person-outline", "Perfil"],
 ];
 export default function App() {
   const [splash, setSplash] = useState(true);
@@ -55,8 +55,7 @@ export default function App() {
   function navigate(target) {
     setScreen(target);
     if (target === "chat") {
-      setResident(null);
-      setFilter(null);
+      openChat(residents[0]);
     }
   }
   function openCountry(c) {
@@ -74,13 +73,41 @@ export default function App() {
         ? old
         : {
             ...old,
-            [r.id]: [
-              {
-                id: "intro",
-                mine: false,
-                text: `Olá! Sou ${r.name} e moro em ${r.city}. Esta é uma conversa de demonstração.`,
-              },
-            ],
+            [r.id]:
+              r.id === "ana"
+                ? [
+                    {
+                      id: "intro-1",
+                      mine: true,
+                      text: "Oi, Ana! Estou planejando me mudar para Portugal.",
+                      time: "09:12",
+                    },
+                    {
+                      id: "intro-2",
+                      mine: false,
+                      text: "Olá! Moro em Lisboa. O que você gostaria de saber?",
+                      time: "09:14",
+                    },
+                    {
+                      id: "intro-3",
+                      mine: true,
+                      text: "Como foi sua adaptação no começo?",
+                      time: "09:16",
+                    },
+                    {
+                      id: "intro-4",
+                      mine: false,
+                      text: "Posso compartilhar minha experiência com moradia e rotina por aqui.",
+                      time: "09:17",
+                    },
+                  ]
+                : [
+                    {
+                      id: "intro",
+                      mine: false,
+                      text: `Olá! Sou ${r.name} e moro em ${r.city}.`,
+                    },
+                  ],
           },
     );
     setScreen("conversa");
@@ -90,7 +117,15 @@ export default function App() {
       ...old,
       [id]: [
         ...(old[id] || []),
-        { id: Date.now() + "-me", mine: true, text },
+        {
+          id: Date.now() + "-me",
+          mine: true,
+          text,
+          time: new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
         {
           id: Date.now() + "-demo",
           mine: false,
@@ -150,6 +185,7 @@ export default function App() {
   else
     content = (
       <ResidentsScreen
+        navigate={navigate}
         filter={filter}
         clearFilter={() => setFilter(null)}
         openChat={openChat}
@@ -183,7 +219,7 @@ export default function App() {
                 borderTopWidth: 1,
                 borderColor: colors.line,
                 backgroundColor: "white",
-                paddingVertical: 10,
+                paddingVertical: 7,
               }}
             >
               {tabs.map(([id, icon, label]) => (

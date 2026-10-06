@@ -6,7 +6,7 @@ export const countries = [
     language: "Inglês",
     currency: "Dólar americano",
     image: require("../../assets/usa.jpg"),
-    summary: "Conheça cidades, cultura e possibilidades de estudo.",
+    summary: "Inovação, diversidade e grandes oportunidades.",
   },
   {
     id: "portugal",
@@ -15,7 +15,7 @@ export const countries = [
     language: "Português",
     currency: "Euro",
     image: require("../../assets/portugal.jpg"),
-    summary: "Explore cultura, cidades e a rotina em Portugal.",
+    summary: "Qualidade de vida, cultura e oportunidades na Europa.",
   },
   {
     id: "paraguay",
@@ -24,7 +24,7 @@ export const countries = [
     language: "Espanhol e guarani",
     currency: "Guarani",
     image: require("../../assets/paraguay.jpg"),
-    summary: "Descubra um destino vizinho ao Brasil.",
+    summary: "Proximidade, custo de vida acessível e boas oportunidades.",
   },
   {
     id: "uk",
@@ -33,7 +33,7 @@ export const countries = [
     language: "Inglês",
     currency: "Libra esterlina",
     image: require("../../assets/uk.jpg"),
-    summary: "Conheça destinos de estudo e a cultura local.",
+    summary: "Tradição, educação de excelência e mercado global.",
   },
   {
     id: "japan",
@@ -42,7 +42,7 @@ export const countries = [
     language: "Japonês",
     currency: "Iene",
     image: require("../../assets/japan.jpg"),
-    summary: "Explore tradições, cidades e costumes japoneses.",
+    summary: "Tecnologia, cultura única e alta qualidade de vida.",
   },
 ];
 export const residents = [

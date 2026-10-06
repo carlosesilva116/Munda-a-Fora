@@ -1,16 +1,16 @@
 import { StyleSheet } from "react-native";
 export const colors = {
-  blue: "#1463FF",
-  navy: "#102A43",
+  blue: "#005CFF",
+  navy: "#071653",
   pale: "#E3F0FF",
-  text: "#526581",
-  bg: "#F5F8FC",
+  text: "#6075A3",
+  bg: "#FFFFFF",
   line: "#E4EAF2",
 };
 export const s = StyleSheet.create({
-  page: { padding: 20, paddingBottom: 32 },
+  page: { padding: 18, paddingBottom: 32 },
   title: {
-    fontSize: 28,
+    fontSize: 27,
     fontWeight: "800",
     color: colors.navy,
     marginBottom: 10,
@@ -22,8 +22,8 @@ export const s = StyleSheet.create({
     marginBottom: 18,
   },
   card: {
-    backgroundColor: "white",
-    borderRadius: 18,
+    backgroundColor: "#F8FAFD",
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,

@@ -7,13 +7,15 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { countries } from "../data/countries";
-import { s, colors } from "../styles/theme";
-import { Icon } from "../components/UI";
+import { colors, s } from "../styles/theme";
+import { Icon, Flag } from "../components/UI";
 export default function ChatScreen({ resident, messages, send, back }) {
   const [draft, setDraft] = useState("");
-  const scroll = useRef(null);
+  const scroll = useRef(null),
+    country = countries.find((c) => c.id === resident.countryId);
   function submit() {
     if (draft.trim()) {
       send(resident.id, draft.trim());
@@ -25,59 +27,142 @@ export default function ChatScreen({ resident, messages, send, back }) {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={[s.card, s.row, { margin: 16 }]}>
-        <Pressable onPress={back} accessibilityLabel="Ver residentes">
-          <Icon name="arrow-back" />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={s.label}>
-            {resident.name} •{" "}
-            {countries.find((c) => c.id === resident.countryId).name}
-          </Text>
-          <Text style={s.text}>Residente em {resident.city}</Text>
-        </View>
-        <Icon name="person-circle" size={40} />
-      </View>
-      <Text
-        style={{
-          textAlign: "center",
-          color: colors.text,
-          fontSize: 12,
-          marginBottom: 12,
-        }}
-      >
-        Chat de demonstração • Sem envio a pessoas reais
-      </Text>
       <ScrollView
         ref={scroll}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 18 }}
         onContentSizeChange={() =>
           scroll.current?.scrollToEnd({ animated: true })
         }
+        keyboardShouldPersistTaps="handled"
       >
-        {messages.map((m) => (
+        <View style={[s.row, { justifyContent: "space-between" }]}>
+          <Pressable onPress={back} accessibilityLabel="Ver residentes">
+            <Icon name="arrow-back" color={colors.navy} />
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                "Conversa ilustrativa",
+                "As mensagens são locais e os perfis são fictícios.",
+              )
+            }
+            accessibilityLabel="Informações da conversa"
+          >
+            <Icon name="ellipsis-vertical" color={colors.navy} />
+          </Pressable>
+        </View>
+        <View style={{ alignItems: "center", marginBottom: 20 }}>
+          <View
+            style={{
+              width: 105,
+              height: 105,
+              borderRadius: 60,
+              backgroundColor: colors.pale,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 9,
+            }}
+          >
+            <Icon name="person" size={65} />
+            <View
+              style={{
+                position: "absolute",
+                right: 5,
+                bottom: 4,
+                width: 20,
+                height: 20,
+                borderRadius: 12,
+                backgroundColor: colors.blue,
+                borderWidth: 3,
+                borderColor: "white",
+              }}
+            />
+          </View>
+          <Text style={[s.label, { fontSize: 21 }]}>
+            {resident.name} • {country.name}
+          </Text>
+          <Text style={s.text}>Residente em {resident.city}</Text>
+          <Text style={{ color: "#9AA9C6", fontSize: 13, marginTop: 4 }}>
+            Perfil ilustrativo
+          </Text>
+          <View
+            style={[
+              s.row,
+              {
+                backgroundColor: "#F1F4FA",
+                borderRadius: 24,
+                paddingHorizontal: 15,
+                paddingVertical: 7,
+                marginTop: 13,
+                gap: 9,
+              },
+            ]}
+          >
+            <Flag country={country} />
+            <Text style={{ color: colors.text, fontSize: 13 }}>
+              Quero morar em {country.name}
+            </Text>
+          </View>
+        </View>
+        {messages.map((m, i) => (
           <View
             key={m.id}
             style={{
               alignSelf: m.mine ? "flex-end" : "flex-start",
-              backgroundColor: m.mine ? colors.pale : "white",
+              backgroundColor: m.mine ? colors.pale : "#F1F4FA",
               borderRadius: 18,
-              padding: 14,
-              maxWidth: "86%",
-              marginBottom: 12,
+              borderBottomRightRadius: m.mine ? 3 : 18,
+              borderBottomLeftRadius: m.mine ? 18 : 3,
+              padding: 13,
+              maxWidth: "85%",
+              marginBottom: 15,
             }}
           >
-            <Text style={{ color: colors.navy, fontSize: 16, lineHeight: 23 }}>
+            <Text style={{ color: colors.navy, fontSize: 16, lineHeight: 22 }}>
               {m.text}
             </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: 4,
+                marginTop: 3,
+              }}
+            >
+              <Text style={{ fontSize: 11, color: "#91A2C5" }}>
+                {m.time || `09:${12 + i * 2}`}
+              </Text>
+              {m.mine && <Icon name="checkmark-done" size={16} />}
+            </View>
           </View>
         ))}
       </ScrollView>
-      <View style={[s.row, { padding: 14 }]}>
+      <View style={[s.row, { padding: 12, gap: 8 }]}>
+        <Pressable
+          accessibilityLabel="Anexar arquivo"
+          onPress={() =>
+            Alert.alert(
+              "Anexos",
+              "O envio de arquivos ainda não está disponível neste protótipo.",
+            )
+          }
+        >
+          <Icon name="attach" color={colors.navy} />
+        </Pressable>
         <TextInput
-          style={[s.input, { flex: 1, marginBottom: 0, maxHeight: 100 }]}
+          style={{
+            flex: 1,
+            borderWidth: 1,
+            borderColor: colors.line,
+            borderRadius: 24,
+            padding: 12,
+            maxHeight: 100,
+            color: colors.navy,
+            backgroundColor: "#F8FAFD",
+          }}
           placeholder="Escreva uma mensagem..."
+          placeholderTextColor={colors.text}
           accessibilityLabel="Mensagem"
           multiline
           value={draft}
@@ -88,11 +173,11 @@ export default function ChatScreen({ resident, messages, send, back }) {
           onPress={submit}
           style={{
             backgroundColor: colors.blue,
-            padding: 14,
+            padding: 13,
             borderRadius: 28,
           }}
         >
-          <Icon name="send" color="white" />
+          <Icon name="send" color="white" size={22} />
         </Pressable>
       </View>
     </KeyboardAvoidingView>

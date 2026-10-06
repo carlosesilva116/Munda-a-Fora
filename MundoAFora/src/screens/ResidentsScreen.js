@@ -3,11 +3,16 @@ import { View, Text, ScrollView, Pressable } from "react-native";
 import { countries, residents } from "../data/countries";
 import { s, colors } from "../styles/theme";
 import { Brand, Button, Icon } from "../components/UI";
-export default function ResidentsScreen({ filter, clearFilter, openChat }) {
+export default function ResidentsScreen({
+  filter,
+  clearFilter,
+  openChat,
+  navigate,
+}) {
   const list = residents.filter((r) => !filter || r.countryId === filter);
   return (
     <ScrollView contentContainerStyle={s.page}>
-      <Brand />
+      <Brand onProfile={() => navigate("perfil")} />
       <Text style={s.title}>Encontre residentes</Text>
       <Text style={s.subtitle}>
         Perfis fictícios para demonstrar as conexões do aplicativo.

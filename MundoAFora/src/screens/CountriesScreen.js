@@ -15,9 +15,7 @@ export default function CountriesScreen({ openCountry }) {
     <ScrollView contentContainerStyle={s.page}>
       <Brand />
       <Text style={s.title}>Explore os países</Text>
-      <Text style={s.subtitle}>
-        Conheça destinos, culturas e possibilidades.
-      </Text>
+      
       <TextInput
         style={s.input}
         placeholder="Buscar um país"

@@ -58,3 +58,7 @@ As fotos pequenas foram extraídas do protótipo fornecido; podem ser substituí
 - assets: logo e fotos locais.
 
 Para conectar pessoas reais posteriormente, implementar autenticação, armazenamento persistente, servidor de mensagens, bloqueio e denúncia de usuários.
+
+
+## Login e cadastro
+Após a abertura, o app mostra o login. Use um e-mail válido e qualquer senha não vazia para explorar a demonstração. O cadastro valida nome, e-mail, senha de pelo menos 8 caracteres, confirmação e aceite dos termos de demonstração. Não existe autenticação real nem armazenamento de contas/senhas. O cadastro preenche o perfil durante a sessão. A opção Sair retorna ao login.

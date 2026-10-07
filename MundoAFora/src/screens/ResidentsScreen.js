@@ -8,10 +8,8 @@ export default function ResidentsScreen({ filter, clearFilter, openChat }) {
   return (
     <ScrollView contentContainerStyle={s.page}>
       <Brand />
-      <Text style={s.title}>Encontre residentes</Text>
-      <Text style={s.subtitle}>
-        Perfis fictícios para demonstrar as conexões do aplicativo.
-      </Text>
+    
+      
       {filter && (
         <Button title="Mostrar todos os países" onPress={clearFilter} outline />
       )}

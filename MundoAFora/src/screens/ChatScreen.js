@@ -38,16 +38,7 @@ export default function ChatScreen({ resident, messages, send, back }) {
         </View>
         <Icon name="person-circle" size={40} />
       </View>
-      <Text
-        style={{
-          textAlign: "center",
-          color: colors.text,
-          fontSize: 12,
-          marginBottom: 12,
-        }}
-      >
-        Chat de demonstração • Sem envio a pessoas reais
-      </Text>
+      
       <ScrollView
         ref={scroll}
         style={{ flex: 1 }}

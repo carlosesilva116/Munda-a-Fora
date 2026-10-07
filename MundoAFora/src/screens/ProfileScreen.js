@@ -9,6 +9,7 @@ export default function ProfileScreen({
   favorites,
   openCountry,
   navigate,
+  onLogout,
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profile);
@@ -37,9 +38,6 @@ export default function ProfileScreen({
           <Icon name="person" size={64} />
         </View>
         <Text style={[s.title, { marginTop: 14 }]}>{profile.name}</Text>
-        <View style={s.chip}>
-          <Text style={s.chipText}>{profile.kind}</Text>
-        </View>
       </View>
       {editing ? (
         <View style={s.card}>
@@ -61,24 +59,7 @@ export default function ProfileScreen({
               />
             </View>
           ))}
-          <Text style={s.text}>Meu momento</Text>
-          {["Planejando a mudança", "Residente no exterior"].map((kind) => (
-            <Pressable
-              key={kind}
-              onPress={() => setDraft({ ...draft, kind })}
-              style={[
-                s.chip,
-                { marginVertical: 5 },
-                draft.kind === kind && { backgroundColor: colors.blue },
-              ]}
-            >
-              <Text
-                style={[s.chipText, draft.kind === kind && { color: "white" }]}
-              >
-                {kind}
-              </Text>
-            </Pressable>
-          ))}
+          
           {!!error && <Text style={{ color: "#B42318" }}>{error}</Text>}
           <Button title="Salvar alterações" onPress={save} />
           <Button title="Cancelar" outline onPress={() => setEditing(false)} />
@@ -99,7 +80,7 @@ export default function ProfileScreen({
               ["Quero morar em", profile.destination],
               ["Idiomas", profile.languages],
             ].map(([label, value]) => (
-              <View key={label} style={{ paddingVertical: 10 }}>
+              <View key={label} style={{ paddingVertical: 10  }}>
                 <Text style={s.text}>{label}</Text>
                 <Text style={s.label}>{value}</Text>
               </View>
@@ -109,36 +90,20 @@ export default function ProfileScreen({
             <Text style={s.section}>Sobre mim</Text>
             <Text style={s.text}>{profile.bio}</Text>
           </View>
-          <Text style={s.section}>Interesses</Text>
-          <View style={[s.row, { flexWrap: "wrap" }]}>
+          <Text style={s.sectionProfile}>Interesses</Text>
+          <View style={[s.rowPerfil, { flexWrap: "wrap" }]}>
             {["Moradia", "Trabalho", "Cultura"].map((t) => (
               <View style={s.chip} key={t}>
                 <Text style={s.chipText}>{t}</Text>
               </View>
             ))}
           </View>
-          <Text style={s.section}>Países favoritos</Text>
-          {countries
-            .filter((c) => favorites.includes(c.id))
-            .map((c) => (
-              <CountryCard
-                key={c.id}
-                country={c}
-                onPress={() => openCountry(c)}
-              />
-            ))}
-          {!favorites.length && (
-            <Text style={s.text}>
-              Toque no coração na tela de um país para salvá-lo.
-            </Text>
-          )}
-          <Button title="Minhas conversas" onPress={() => navigate("chat")} />
+   
+        
         </>
       )}
-      <Text style={[s.text, { fontSize: 12, marginTop: 14 }]}>
-        Os dados desta versão ficam disponíveis durante a sessão e são
-        reiniciados ao fechar o app.
-      </Text>
+      <Button title="Sair" outline onPress={onLogout} />
+     
     </ScrollView>
   );
 }

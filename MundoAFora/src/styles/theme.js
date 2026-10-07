@@ -15,6 +15,12 @@ export const s = StyleSheet.create({
     color: colors.navy,
     marginBottom: 10,
   },
+  titleHome: {
+    fontSize: 25,
+    fontWeight: "800",
+    color: colors.navy,
+    marginBottom: 10,
+  },
   subtitle: {
     fontSize: 15,
     lineHeight: 22,
@@ -25,11 +31,12 @@ export const s = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 18,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: colors.line,
   },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
+  rowPerfil: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 40, justifyContent: "center" },
   label: { fontSize: 17, fontWeight: "700", color: colors.navy },
   text: { fontSize: 15, lineHeight: 22, color: colors.text },
   input: {
@@ -48,6 +55,14 @@ export const s = StyleSheet.create({
     color: colors.navy,
     marginTop: 18,
     marginBottom: 12,
+  },
+  sectionProfile: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: colors.navy,
+    marginTop: 18,
+    marginBottom: 12,
+    textAlign: "center",
   },
   chip: {
     borderRadius: 20,

@@ -33,7 +33,7 @@ export default function HomeScreen({ navigate, openCountry }) {
         />
       </View>
       <View style={s.page}>
-        <Text style={s.title}>Seu próximo destino começa aqui</Text>
+        <Text style={s.titleHome}>Seu próximo destino começa aqui</Text>
         <Text style={s.subtitle}>
           Descubra países e converse com quem já mora lá.
         </Text>

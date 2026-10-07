@@ -11,6 +11,7 @@ import CompareScreen from "./src/screens/CompareScreen";
 import ResidentsScreen from "./src/screens/ResidentsScreen";
 import ChatScreen from "./src/screens/ChatScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import AuthScreen from "./src/screens/AuthScreen";
 const tabs = [
   ["início", "home-outline", "Início"],
   ["países", "globe-outline", "Países"],
@@ -20,6 +21,8 @@ const tabs = [
 ];
 export default function App() {
   const [splash, setSplash] = useState(true);
+  const [signedIn, setSignedIn] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
   const [screen, setScreen] = useState("início");
   const [country, setCountry] = useState(null);
   const [resident, setResident] = useState(null);
@@ -40,6 +43,10 @@ export default function App() {
   }, []);
   useEffect(() => {
     const h = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (!signedIn) {
+        if (authMode === "cadastro") { setAuthMode("login"); return true; }
+        return false;
+      }
       if (screen === "início") return false;
       setScreen(
         screen === "conversa"
@@ -51,7 +58,7 @@ export default function App() {
       return true;
     });
     return () => h.remove();
-  }, [screen]);
+  }, [screen, signedIn, authMode]);
   function navigate(target) {
     setScreen(target);
     if (target === "chat") {
@@ -145,6 +152,7 @@ export default function App() {
         favorites={favorites}
         openCountry={openCountry}
         navigate={navigate}
+        onLogout={() => { setSignedIn(false); setAuthMode("login"); setScreen("início"); setFavorites([]); setConversations({}); setCountry(null); setResident(null); setFilter(null); }}
       />
     );
   else
@@ -158,9 +166,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: splash ? colors.navy : colors.bg }}
+        style={{ flex: 1, backgroundColor: splash || (!signedIn && authMode === "login") ? colors.navy : colors.bg }}
       >
-        <StatusBar style={splash ? "light" : "dark"} />
+        <StatusBar style={splash || (!signedIn && authMode === "login") ? "light" : "dark"} />
         {splash ? (
           <View
             style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
@@ -174,6 +182,11 @@ export default function App() {
               Conexões que te levam mais longe
             </Text>
           </View>
+        ) : !signedIn ? (
+          <AuthScreen key={authMode} mode={authMode} onChangeMode={setAuthMode} onEnter={(user) => {
+            setProfile({ name: user.name, email: user.email, kind: user.kind, location: "", destination: "", languages: "Português", bio: "" });
+            setScreen("início"); setSignedIn(true);
+          }} />
         ) : (
           <>
             <View style={{ flex: 1 }}>{content}</View>

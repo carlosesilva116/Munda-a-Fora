@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Mundo A Fora",
+    "slug": "mundo-a-fora",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "android": { "package": "com.mundoafora.app" },
+    "ios": { "supportsTablet": true },
+    "web": { "bundler": "metro" }
+  }
+}

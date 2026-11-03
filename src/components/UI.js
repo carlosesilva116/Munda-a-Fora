@@ -2,35 +2,18 @@ import React from "react";
 import { Text, Pressable, View, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, s } from "../styles/theme";
+import PrimaryButton from "./PrimaryButton";
 export function Icon({ name, size = 24, color = colors.blue }) {
   return <Ionicons name={name} size={size} color={color} />;
 }
-export function Button({ title, onPress, outline = false }) {
+export function Button({ title, onPress, outline = false, disabled = false }) {
   return (
-    <Pressable
-      accessibilityRole="button"
+    <PrimaryButton
+      title={title}
       onPress={onPress}
-      style={({ pressed }) => ({
-        padding: 15,
-        borderRadius: 25,
-        backgroundColor: outline ? "white" : colors.blue,
-        borderWidth: 1,
-        borderColor: colors.blue,
-        opacity: pressed ? 0.7 : 1,
-        marginVertical: 6,
-      })}
-    >
-      <Text
-        style={{
-          textAlign: "center",
-          fontSize: 16,
-          fontWeight: "700",
-          color: outline ? colors.blue : "white",
-        }}
-      >
-        {title}
-      </Text>
-    </Pressable>
+      outline={outline}
+      disabled={disabled}
+    />
   );
 }
 export function Brand() {

@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView } from "react-native";
 import { Icon } from "../components/UI";
 import { colors, s } from "../styles/theme";
 
-export default function HomeEmpresaScreen({ companyName = "Sua empresa", projects = [], onAddProject, onLogout }) {
+export default function HomeEmpresaScreen({ companyName = "Sua empresa", projects = [], onAddProject, onEditProfile, onLogout }) {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={[s.page, { paddingTop: 28 }]}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -14,6 +14,11 @@ export default function HomeEmpresaScreen({ companyName = "Sua empresa", project
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Sair" onPress={onLogout} style={{ padding: 10 }}><Icon name="log-out-outline" /></Pressable>
       </View>
+      <Pressable accessibilityRole="button" onPress={onEditProfile} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 15, backgroundColor: "white", borderWidth: 1, borderColor: colors.line, borderRadius: 15, marginBottom: 16 }}>
+        <Icon name="business-outline" color={colors.blue} size={22} />
+        <View style={{ flex: 1 }}><Text style={{ color: colors.navy, fontWeight: "800" }}>Perfil da empresa</Text><Text style={{ color: colors.text, fontSize: 12, marginTop: 3 }}>Dados oficiais, origem e registro empresarial</Text></View>
+        <Icon name="chevron-forward" color={colors.blue} />
+      </Pressable>
       <View style={[s.card, { backgroundColor: colors.navy, borderColor: colors.navy, padding: 20 }]}>
         <Text style={{ color: "white", fontSize: 15 }}>Seus projetos publicados</Text>
         <Text style={{ color: "white", fontSize: 34, fontWeight: "800", marginTop: 4 }}>{projects.length}</Text>

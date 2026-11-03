@@ -12,7 +12,7 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
   function submit() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError("Informe um e-mail válido.");
     if (!password) return setError("Informe sua senha.");
-    onLogin({ name: "Visitante", email: email.trim().toLowerCase(), kind: "Planejando a mudança" });
+    onLogin({ email: email.trim().toLowerCase(), password });
   }
 
   function field(label, icon, value, onChangeText, secret = false, show = false, toggle) {
@@ -49,7 +49,7 @@ export default function LoginScreen({ onLogin, onGoToRegister }) {
             <Text style={styles.hint}>Ainda não tem uma conta?</Text>
             <Pressable accessibilityRole="button" onPress={onGoToRegister}><Text style={[styles.link, { fontWeight: "700", fontSize: 18 }]}>Criar conta</Text></Pressable>
           </View>
-          <Text style={styles.demo}>Modo demonstração: não autentica nem salva contas ou senhas. Os dados do perfil duram apenas esta sessão.</Text>
+          <Text style={styles.demo}>Sua conta é autenticada pelo backend quando as credenciais do Supabase estiverem configuradas.</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

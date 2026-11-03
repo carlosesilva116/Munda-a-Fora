@@ -12,18 +12,26 @@ export default function RegisterScreen({ onRegister, onGoToLogin }) {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [kind, setKind] = useState("Planejando a mudança");
   const [companyName, setCompanyName] = useState("");
+  const [companyCountry, setCompanyCountry] = useState("Brasil");
+  const [originCountry, setOriginCountry] = useState("Brasil");
+  const [companyId, setCompanyId] = useState("");
+  const identifierLabels = { "Brasil": "CNPJ", "Portugal": "NIF / NIPC", "Estados Unidos": "EIN", " Reino Unido": "Company Number", "Canadá": "Business Number (BN)", "Espanha": "NIF / CIF", "França": "SIREN / SIRET", "Alemanha": "Handelsregisternummer", "Japão": "Corporate Number", "Paraguai": "RUC" };
+  const identifierLabel = identifierLabels[companyCountry] || "Registro comercial / identificador fiscal";
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
 
   function submit() {
     if (!name.trim()) return setError(kind === "Empresa" ? "Informe o nome do responsável." : "Informe seu nome completo.");
     if (kind === "Empresa" && !companyName.trim()) return setError("Informe o nome da empresa.");
+    if (kind === "Empresa" && !companyCountry.trim()) return setError("Informe o país onde a empresa está registrada.");
+    if (kind === "Empresa" && !originCountry.trim()) return setError("Informe o país de origem da empresa.");
+    if (kind === "Empresa" && !companyId.trim()) return setError("Informe o identificador empresarial correspondente ao país.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError("Informe um e-mail válido.");
     if (!password) return setError("Informe sua senha.");
     if (password.length < 8) return setError("Use pelo menos 8 caracteres na senha.");
     if (password !== confirmation) return setError("As senhas não coincidem.");
     if (!accepted) return setError("Aceite os termos para continuar.");
-    onRegister({ name: name.trim(), email: email.trim().toLowerCase(), kind, companyName: companyName.trim() });
+    onRegister({ name: name.trim(), email: email.trim().toLowerCase(), password, kind, companyName: companyName.trim(), companyCountry, originCountry, companyId: companyId.trim() });
   }
 
   function field(label, icon, value, onChangeText, secret = false, show = false, toggle) {
@@ -52,6 +60,11 @@ export default function RegisterScreen({ onRegister, onGoToLogin }) {
           <Text style={styles.subtitle}>Conecte-se com quem já vive no seu próximo destino.</Text>
           {field("Nome completo", "person-outline", name, setName)}
           {kind === "Empresa" && <View style={styles.field}><Text style={styles.label}>Nome da empresa</Text><View style={styles.inputRow}><Icon name="business-outline" color={NAVY} size={23} /><TextInput accessibilityLabel="Nome da empresa" style={styles.input} value={companyName} onChangeText={setCompanyName} placeholder="Razão social ou nome comercial" placeholderTextColor={MUTED} autoCapitalize="words" /></View></View>}
+          {kind === "Empresa" && <>
+            <View style={styles.field}><Text style={styles.label}>País onde a empresa está registrada</Text><View style={styles.inputRow}><Icon name="earth-outline" color={NAVY} size={23} /><TextInput accessibilityLabel="País de registro da empresa" style={styles.input} value={companyCountry} onChangeText={setCompanyCountry} placeholder="Ex.: Brasil, Portugal, Estados Unidos" placeholderTextColor={MUTED} autoCapitalize="words" /></View></View>
+            <View style={styles.field}><Text style={styles.label}>País de origem da empresa</Text><View style={styles.inputRow}><Icon name="flag-outline" color={NAVY} size={23} /><TextInput accessibilityLabel="País de origem da empresa" style={styles.input} value={originCountry} onChangeText={setOriginCountry} placeholder="País onde a empresa foi fundada" placeholderTextColor={MUTED} autoCapitalize="words" /></View></View>
+            <View style={styles.field}><Text style={styles.label}>{identifierLabel}</Text><View style={styles.inputRow}><Icon name="document-text-outline" color={NAVY} size={23} /><TextInput accessibilityLabel={identifierLabel} style={styles.input} value={companyId} onChangeText={setCompanyId} placeholder={`Número de registro (${identifierLabel})`} placeholderTextColor={MUTED} autoCapitalize="characters" /></View><Text style={styles.hint}>O tipo de identificador depende do país de registro. Informe o número oficial da empresa.</Text></View>
+          </>}
           {field("E-mail", "mail-outline", email, setEmail)}
           {field("Senha", "lock-closed-outline", password, setPassword, true, visible, () => setVisible(!visible))}
           <Text style={styles.hint}>Use pelo menos 8 caracteres.</Text>
@@ -75,7 +88,7 @@ export default function RegisterScreen({ onRegister, onGoToLogin }) {
             <Text style={styles.hint}>Já tem uma conta?</Text>
             <Pressable accessibilityRole="button" onPress={onGoToLogin}><Text style={[styles.link, { fontWeight: "700", fontSize: 18 }]}>Entrar</Text></Pressable>
           </View>
-          <Text style={styles.demo}>Modo demonstração: não autentica nem salva contas ou senhas. Os dados do perfil duram apenas esta sessão.</Text>
+          <Text style={styles.demo}>Sua senha é enviada diretamente ao serviço de autenticação; nunca é armazenada no perfil da aplicação.</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -1,12 +1,10 @@
-# Mundo A Fora
+# Mundo a Fora — aplicativo mobile
 
-Aplicativo em React Native e Expo SDK 57 para abrir no Expo Go. Interface azul inspirada nos protótipos aprovados.
+Aplicativo em React Native + Expo para apoiar pessoas que planejam morar em outro país, conectando informações sobre destinos, projetos, residentes e perfis pessoais/empresariais.
 
-## Abrir no celular
+## Executar o projeto
 
-1. Instale Node.js 22 LTS ou versão superior compatível e atualize o Expo Go no celular (SDK 57).
-2. Extraia o ZIP. No VS Code, abra a pasta **MundoAFora**, que contém o package.json.
-3. Abra Terminal > Novo Terminal e execute:
+Requisitos: Node.js compatível com o Expo SDK definido em `package.json`.
 
 ```bash
 npm install
@@ -14,51 +12,28 @@ npx expo install --fix
 npm start
 ```
 
-4. Deixe computador e celular na mesma rede Wi-Fi.
-5. Android: abra o Expo Go e use Scan QR code. iPhone: leia o QR Code com a câmera e abra no Expo Go.
+Para Android, iOS ou web, use `npm run android`, `npm run ios` ou `npm run web`. Para testar em redes com restrições, use `npm run tunnel`.
 
-Se a rede não conectar, pare o terminal com Ctrl+C e execute:
+## Configurar o backend
 
-```bash
-npm run tunnel
-```
+O projeto mantém a integração Supabase existente. Consulte [`README_BACKEND.md`](README_BACKEND.md) para configurar o projeto, variáveis de ambiente e o esquema SQL. Sem as variáveis `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY`, as telas demonstrativas continuam disponíveis quando suportado pelo fluxo, mas recursos persistidos precisam do backend configurado.
 
-O Expo poderá pedir para instalar @expo/ngrok para usar o túnel. Mantenha o computador e o terminal ligados.
+Nunca inclua a chave `service_role` no aplicativo.
 
-Se aparecer incompatibilidade de SDK, confira o Expo Go em https://expo.dev/go. Esta pasta usa SDK 57. Não misture node_modules de outro projeto.
+## Organização do código
 
-Para limpar cache:
+- `App.js`: ponto de entrada, mantendo a inicialização enxuta.
+- `src/navigation/AppNavigation.js`: centraliza as etapas de autenticação, navegação entre telas, sessão e ações compartilhadas. Foi mantida a navegação atual para preservar o fluxo já existente.
+- `src/screens/`: telas de usuários, empresas, países, projetos, residentes, perfil e chat.
+- `src/components/`: componentes reutilizáveis de interface (`UI.js`, `PrimaryButton.js`, `InputField.js`).
+- `src/services/api.js`: operações de autenticação, perfis, projetos, inscrições, chats e favoritos.
+- `src/services/supabase.js`: criação e configuração do cliente Supabase.
+- `src/styles/theme.js`: tokens de cores e estilos comuns.
+- `src/data/countries.js`: conteúdo de países usado pelo aplicativo.
+- `supabase/schema.sql`: tabelas, políticas e recursos de banco de dados.
 
-```bash
-npx expo start --go --clear
-```
+## Padrões aplicados nesta organização
 
-## O que funciona
+A estrutura segue a separação de responsabilidades usada no StudyFlow: entrada do aplicativo, navegação centralizada, telas isoladas, componentes reutilizáveis e estilos centralizados. Foram introduzidos componentes compartilhados de botão e campo de formulário, além de nomes de cores compatíveis com esse padrão. Os aliases antigos do tema foram preservados para evitar alterações desnecessárias nas telas.
 
-- Splash com logo, início, catálogo dos cinco países, pesquisa e filtros.
-- Detalhes com seções expansíveis e favoritos.
-- Comparação de idioma, moeda e continente de dois destinos.
-- Lista de residentes por país e chat com respostas de demonstração.
-- Perfil editável e acesso aos favoritos.
-- Menu inferior e botão Voltar do Android.
-
-## Limites desta versão
-
-Sem backend, login ou comunicação real. Todos os residentes são fictícios e o chat responde automaticamente para demonstrar a interface. Perfil, favoritos e mensagens ficam em memória e reiniciam ao encerrar o app. O conteúdo migratório é introdutório e não substitui pesquisa em fontes oficiais.
-
-As fotos pequenas foram extraídas do protótipo fornecido; podem ser substituídas por imagens em maior resolução mantendo os nomes em assets. O avatar usa um ícone para não depender de fotos de pessoas reais. A interface foi adaptada para rolagem em diferentes tamanhos de celular.
-
-## Organização
-
-- App.js: navegação e estado da sessão.
-- src/screens: telas.
-- src/components/UI.js: botões, ícones e cards reutilizáveis.
-- src/data/countries.js: países e residentes de demonstração.
-- src/styles/theme.js: cores e estilos.
-- assets: logo e fotos locais.
-
-Para conectar pessoas reais posteriormente, implementar autenticação, armazenamento persistente, servidor de mensagens, bloqueio e denúncia de usuários.
-
-
-## Login e cadastro
-Após a abertura, o app mostra o login. Use um e-mail válido e qualquer senha não vazia para explorar a demonstração. O cadastro valida nome, e-mail, senha de pelo menos 8 caracteres, confirmação e aceite dos termos de demonstração. Não existe autenticação real nem armazenamento de contas/senhas. O cadastro preenche o perfil durante a sessão. A opção Sair retorna ao login.
+As funções principais e a identidade do Mundo a Fora foram mantidas. Os pacotes específicos de backend (Supabase, AsyncStorage e polyfill de URL) continuam no projeto porque dão suporte à persistência e autenticação e não fazem parte do StudyFlow de referência.

@@ -1,10 +1,10 @@
 import { StyleSheet } from "react-native";
 export const colors = {
-  blue: "#1463FF",
-  navy: "#102A43",
-  pale: "#E3F0FF",
+  blue: "#2864E8",
+  navy: "#142B4A",
+  pale: "#EAF1FF",
   text: "#526581",
-  bg: "#F5F8FC",
+  bg: "#F4F7FB",
   line: "#E4EAF2",
 };
 export const s = StyleSheet.create({
@@ -29,7 +29,7 @@ export const s = StyleSheet.create({
   },
   card: {
     backgroundColor: "white",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 10,
     borderWidth: 1,

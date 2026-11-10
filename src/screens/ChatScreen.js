@@ -32,7 +32,10 @@ export default function ChatScreen({ resident, messages, send, back }) {
         <View style={{ flex: 1 }}>
           <Text style={s.label}>
             {resident.name} •{" "}
-            {countries.find((c) => c.id === resident.countryId).name}
+            {countries.find((c) => c.id === resident?.countryId)?.name ||
+              resident?.destination ||
+              resident?.city ||
+              "Exterior"}
           </Text>
           <Text style={s.text}>Residente em {resident.city}</Text>
         </View>
@@ -47,7 +50,7 @@ export default function ChatScreen({ resident, messages, send, back }) {
           scroll.current?.scrollToEnd({ animated: true })
         }
       >
-        {messages.map((m) => (
+        {messages.map((m) => (  
           <View
             key={m.id}
             style={{

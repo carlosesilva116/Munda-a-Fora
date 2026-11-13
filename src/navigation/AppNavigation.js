@@ -1,8 +1,8 @@
-
 import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
+  TextInput,
   Pressable,
   BackHandler,
   Alert,
@@ -11,6 +11,11 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { colors } from "../styles/theme";
 import { Icon } from "../components/UI";
+import {
+  Avatar,
+  Flag,
+  countryName,
+} from "../components/ProfileUI";
 
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/LoginScreen";
@@ -45,6 +50,25 @@ const tabs = [
   ["perfil", "person-outline", "Perfil"],
 ];
 
+const emptyProfile = {
+  name: "",
+  kind: "Planejando a mudança",
+  avatarUrl: "",
+  residenceCountry: "",
+  location: "",
+  destination: "",
+  languages: "Português",
+  bio: "",
+};
+
+const countryIds = {
+  PT: "portugal",
+  US: "usa",
+  PY: "paraguay",
+  GB: "uk",
+  JP: "japan",
+};
+
 export default function AppNavigation() {
   const [appStage, setAppStage] = useState("splash");
   const [screen, setScreen] = useState("início");
@@ -61,14 +85,11 @@ export default function AppNavigation() {
   const [savedChats, setSavedChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
+  const [chatSearch, setChatSearch] = useState("");
+  const [loadingChats, setLoadingChats] = useState(false);
 
   const [profile, setProfileState] = useState({
-    name: "",
-    kind: "Planejando a mudança",
-    location: "",
-    destination: "",
-    languages: "Português",
-    bio: "",
+    ...emptyProfile,
   });
 
   const [busy, setBusy] = useState(false);
@@ -77,7 +98,8 @@ export default function AppNavigation() {
   useEffect(() => {
     if (!isBackendConfigured) return;
 
-    authApi.session()
+    authApi
+      .session()
       .then(async (session) => {
         if (!session) return;
 
@@ -87,10 +109,14 @@ export default function AppNavigation() {
           await enterApp(user);
         }
       })
-      .catch((e) => Alert.alert("Backend", e.message));
+      .catch((e) => Alert.alert("Sessão", e.message));
   }, []);
 
-  const finishSplash = useCallback(() => setAppStage("login"), []);
+  const finishSplash = useCallback(() => {
+    setAppStage((current) =>
+      current === "splash" ? "login" : current
+    );
+  }, []);
 
   useEffect(() => {
     const handler = BackHandler.addEventListener(
@@ -107,7 +133,10 @@ export default function AppNavigation() {
           return false;
         }
 
-        if (screen === "novoProjeto" || screen === "perfilEmpresa") {
+        if (
+          screen === "novoProjeto" ||
+          screen === "perfilEmpresa"
+        ) {
           setScreen("homeEmpresa");
           return true;
         }
@@ -133,10 +162,12 @@ export default function AppNavigation() {
     setUserId(user.id || null);
 
     setProfileState({
+      ...emptyProfile,
       ...user,
-      name: user.name,
-      email: user.email,
-      kind: user.kind,
+      name: user.name || "",
+      kind: user.kind || emptyProfile.kind,
+      avatarUrl: user.avatarUrl || "",
+      residenceCountry: user.residenceCountry || "",
       companyName: user.companyName || "",
       companyCountry: user.companyCountry || "",
       originCountry: user.originCountry || "",
@@ -152,15 +183,18 @@ export default function AppNavigation() {
 
     if (isBackendConfigured) {
       try {
-        const savedProjects = await projectsApi.list({ mine: false });
-        setCompanyProjects(savedProjects);
+        const projects = await projectsApi.list({
+          mine: false,
+        });
+
+        setCompanyProjects(projects);
       } catch (e) {
         Alert.alert("Projetos", e.message);
       }
 
       try {
-        const savedFavorites = await favoritesApi.list();
-        setFavorites(savedFavorites);
+        const items = await favoritesApi.list();
+        setFavorites(items);
       } catch (e) {
         Alert.alert("Favoritos", e.message);
       }
@@ -172,15 +206,12 @@ export default function AppNavigation() {
         Alert.alert("Residentes", e.message);
       }
 
-      try {
-        const chats = await chatsApi.list();
-        setSavedChats(chats);
-      } catch (e) {
-        Alert.alert("Conversas", e.message);
-      }
+      await loadChats();
     }
 
-    setScreen(user.kind === "Empresa" ? "homeEmpresa" : "início");
+    setScreen(
+      user.kind === "Empresa" ? "homeEmpresa" : "início"
+    );
     setAppStage("app");
   }
 
@@ -194,18 +225,28 @@ export default function AppNavigation() {
     if (target === "chat") {
       setResident(null);
       setFilter(null);
+      setChatSearch("");
       loadChats();
     }
   }
 
-  function openCountry(c) {
-    setCountry(c);
+  function openCountry(item) {
+    setCountry(item);
     setScreen("destino");
   }
 
-  function findResidents(id = null) {
+  async function findResidents(id = null) {
     setFilter(id);
     setScreen("residentes");
+
+    if (!isBackendConfigured) return;
+
+    try {
+      const directory = await residentsApi.list();
+      setSavedResidents(directory);
+    } catch (e) {
+      Alert.alert("Residentes", e.message);
+    }
   }
 
   // ==========================================
@@ -214,6 +255,8 @@ export default function AppNavigation() {
 
   async function loadChats() {
     if (!isBackendConfigured) return;
+
+    setLoadingChats(true);
 
     try {
       const chats = await chatsApi.list();
@@ -224,7 +267,12 @@ export default function AppNavigation() {
 
           return {
             ...chat,
-            displayTitle: other?.name || chat.title || "Conversa",
+            displayTitle:
+              other?.name || chat.title || "Conversa",
+            avatarUrl: other?.avatarUrl || "",
+            residenceCountry:
+              other?.residenceCountry || "",
+            city: other?.location || "",
           };
         })
       );
@@ -232,37 +280,40 @@ export default function AppNavigation() {
       setSavedChats(updatedChats);
     } catch (e) {
       Alert.alert("Conversas", e.message);
+    } finally {
+      setLoadingChats(false);
     }
   }
 
   async function loadChatMessages(chatId) {
-    try {
-      const messages = await chatsApi.messages(chatId);
+    const messages = await chatsApi.messages(chatId);
 
-      setChatMessages(
-        messages.map((message) => ({
-          id: message.id,
-          mine: String(message.sender_id) === String(userId),
-          text: message.body,
-        }))
-      );
-    } catch (e) {
-      Alert.alert("Mensagens", e.message);
-    }
+    setChatMessages(
+      messages.map((message) => ({
+        id: message.id,
+        mine:
+          String(message.sender_id) === String(userId),
+        text: message.body,
+        createdAt: message.created_at,
+      }))
+    );
   }
 
-  async function openChat(r) {
+  async function openChat(person) {
     try {
       if (!isBackendConfigured) {
-        setResident(r);
+        setActiveChat(null);
+        setResident(person);
 
         setConversations((old) => ({
           ...old,
-          [r.id]: old[r.id] || [
+          [person.id]: old[person.id] || [
             {
               id: "intro",
               mine: false,
-              text: `Olá! Sou ${r.name}. Esta é uma conversa de demonstração.`,
+              text:
+                `Olá! Sou ${person.name}. ` +
+                "Esta é uma conversa de demonstração.",
             },
           ],
         }));
@@ -271,17 +322,40 @@ export default function AppNavigation() {
         return;
       }
 
-      const chat = await chatsApi.openDirect(r.id, r.name);
+      const chat = await chatsApi.openDirect(
+        person.id,
+        person.name
+      );
+
+      const other = await chatsApi.otherMember(chat.id);
 
       setActiveChat(chat);
-      setResident(r);
+      setChatMessages([]);
+
+      setResident({
+        ...person,
+        id: other?.id || person.id,
+        name: other?.name || person.name,
+        city: other
+          ? other.location || ""
+          : person.city || "",
+        avatarUrl: other
+          ? other.avatarUrl || ""
+          : person.avatarUrl || "",
+        residenceCountry: other
+          ? other.residenceCountry || ""
+          : person.residenceCountry || "",
+      });
 
       await loadChatMessages(chat.id);
-      await loadChats();
 
       setScreen("conversa");
+      loadChats();
     } catch (e) {
-      Alert.alert("Não foi possível abrir a conversa", e.message);
+      Alert.alert(
+        "Não foi possível abrir a conversa",
+        e.message
+      );
     }
   }
 
@@ -290,17 +364,21 @@ export default function AppNavigation() {
       const other = await chatsApi.otherMember(chat.id);
 
       setActiveChat(chat);
+      setChatMessages([]);
 
       setResident({
         id: other?.id || chat.id,
         name: other?.name || chat.title || "Conversa",
-        city: other?.location || "Exterior",
+        city: other?.location || "",
         destination: other?.destination || "",
-        countryId: null,
+        avatarUrl: other?.avatarUrl || "",
+        residenceCountry:
+          other?.residenceCountry || "",
+        countryId:
+          countryIds[other?.residenceCountry] || null,
       });
 
       await loadChatMessages(chat.id);
-
       setScreen("conversa");
     } catch (e) {
       Alert.alert("Conversas", e.message);
@@ -308,9 +386,17 @@ export default function AppNavigation() {
   }
 
   async function sendMessage(text) {
-    if (!text.trim()) return;
+    const body = text.trim();
+
+    if (!body) return;
 
     if (!isBackendConfigured) {
+      if (!resident?.id) {
+        throw new Error(
+          "Não foi possível identificar esta conversa."
+        );
+      }
+
       const now = Date.now();
 
       setConversations((old) => ({
@@ -318,9 +404,10 @@ export default function AppNavigation() {
         [resident.id]: [
           ...(old[resident.id] || []),
           {
-            id: String(now),
+            id: `${now}-${Math.random()}`,
             mine: true,
-            text,
+            text: body,
+            createdAt: new Date(now).toISOString(),
           },
         ],
       }));
@@ -329,24 +416,28 @@ export default function AppNavigation() {
     }
 
     if (!activeChat?.id) {
-      Alert.alert("Conversa", "Não foi possível identificar esta conversa.");
-      return;
+      throw new Error(
+        "Não foi possível identificar esta conversa."
+      );
     }
 
-    try {
-      const saved = await chatsApi.send(activeChat.id, text);
+    // O erro segue para ChatScreen, que mantém o texto
+    // no campo e permite tentar o envio novamente.
+    const saved = await chatsApi.send(
+      activeChat.id,
+      body
+    );
 
-      setChatMessages((old) => [
-        ...old,
-        {
-          id: saved.id,
-          mine: String(saved.sender_id) === String(userId),
-          text: saved.body,
-        },
-      ]);
-    } catch (e) {
-      Alert.alert("Mensagem não enviada", e.message);
-    }
+    setChatMessages((old) => [
+      ...old,
+      {
+        id: saved.id,
+        mine:
+          String(saved.sender_id) === String(userId),
+        text: saved.body,
+        createdAt: saved.created_at,
+      },
+    ]);
   }
 
   // ==========================================
@@ -361,12 +452,14 @@ export default function AppNavigation() {
         setFavorites((old) =>
           added
             ? [...old, String(id)]
-            : old.filter((x) => String(x) !== String(id))
+            : old.filter(
+                (item) => String(item) !== String(id)
+              )
         );
       } else {
         setFavorites((old) =>
           old.includes(id)
-            ? old.filter((x) => x !== id)
+            ? old.filter((item) => item !== id)
             : [...old, id]
         );
       }
@@ -376,13 +469,15 @@ export default function AppNavigation() {
   }
 
   // ==========================================
-  // AUTENTICAÇÃO
+  // AUTENTICAÇÃO E PERFIL
   // ==========================================
 
   async function login(credentials) {
-    try {
-      setBusy(true);
+    if (busy) return;
 
+    setBusy(true);
+
+    try {
       const user = await authApi.signIn(
         credentials.email,
         credentials.password
@@ -397,12 +492,15 @@ export default function AppNavigation() {
   }
 
   async function register(values) {
+    if (busy) return;
+
+    setBusy(true);
+
     try {
-      setBusy(true);
-
       const user = await authApi.signUp(values);
+      const session = await authApi.session();
 
-      if (!user.id) {
+      if (!user.id || !session) {
         Alert.alert(
           "Confirme seu e-mail",
           "A conta foi criada. Confirme o e-mail antes de entrar."
@@ -414,26 +512,65 @@ export default function AppNavigation() {
 
       await enterApp(user);
     } catch (e) {
-      Alert.alert("Não foi possível criar a conta", e.message);
+      Alert.alert(
+        "Não foi possível criar a conta",
+        e.message
+      );
     } finally {
       setBusy(false);
     }
   }
 
   async function updateProfile(next) {
-    setProfileState(next);
+    if (!isBackendConfigured) {
+      setProfileState(next);
+      return;
+    }
 
-    if (!isBackendConfigured || !userId) return;
+    if (!userId) {
+      throw new Error(
+        "Entre na sua conta para salvar o perfil."
+      );
+    }
 
+    // Atualiza a tela somente depois de salvar no banco.
+    const saved = await profileApi.update(next);
+
+    setProfileState((old) => ({
+      ...old,
+      ...saved,
+    }));
+
+    setSavedResidents((old) =>
+      old.map((person) =>
+        person.id === saved.id
+          ? {
+              ...person,
+              name: saved.name,
+              avatarUrl: saved.avatarUrl,
+              residenceCountry: saved.residenceCountry,
+              city: saved.location,
+              languages: saved.languages,
+              bio: saved.bio,
+              destination: saved.destination,
+              countryId:
+                countryIds[saved.residenceCountry] || null,
+            }
+          : person
+      )
+    );
+  }
+
+  async function updateCompanyProfile(next) {
     try {
-      const saved = await profileApi.update(next);
-
-      setProfileState((old) => ({
-        ...old,
-        ...saved,
-      }));
+      await updateProfile(next);
     } catch (e) {
-      Alert.alert("Perfil", e.message);
+      Alert.alert(
+        "Perfil não salvo",
+        e.message
+      );
+
+      throw e;
     }
   }
 
@@ -444,26 +581,22 @@ export default function AppNavigation() {
       }
     } catch (e) {
       Alert.alert("Sessão", e.message);
+      return;
     }
 
     setUserId(null);
-
-    setProfileState({
-      name: "",
-      kind: "Planejando a mudança",
-      location: "",
-      destination: "",
-      languages: "Português",
-      bio: "",
-    });
-
+    setProfileState({ ...emptyProfile });
     setAppStage("login");
     setScreen("início");
+
     setFavorites([]);
+    setCompanyProjects([]);
+    setSavedResidents([]);
     setConversations({});
     setSavedChats([]);
     setActiveChat(null);
     setChatMessages([]);
+    setChatSearch("");
     setCountry(null);
     setResident(null);
     setFilter(null);
@@ -522,6 +655,12 @@ export default function AppNavigation() {
     "perfilEmpresa",
   ].includes(screen);
 
+  const filteredChats = savedChats.filter((chat) =>
+    (chat.displayTitle || chat.title || "")
+      .toLocaleLowerCase("pt-BR")
+      .includes(chatSearch.toLocaleLowerCase("pt-BR"))
+  );
+
   let content;
 
   if (screen === "homeEmpresa") {
@@ -540,7 +679,7 @@ export default function AppNavigation() {
     content = (
       <CompanyProfileScreen
         profile={profile}
-        setProfile={updateProfile}
+        setProfile={updateCompanyProfile}
         onBack={() => setScreen("homeEmpresa")}
       />
     );
@@ -558,7 +697,10 @@ export default function AppNavigation() {
             setCompanyProjects((old) => [saved, ...old]);
             setScreen("homeEmpresa");
           } catch (e) {
-            Alert.alert("Projeto não publicado", e.message);
+            Alert.alert(
+              "Projeto não publicado",
+              e.message
+            );
           }
         }}
       />
@@ -571,7 +713,9 @@ export default function AppNavigation() {
       />
     );
   } else if (screen === "países") {
-    content = <CountriesScreen openCountry={openCountry} />;
+    content = (
+      <CountriesScreen openCountry={openCountry} />
+    );
   } else if (screen === "destino") {
     content = (
       <CountryScreen
@@ -590,6 +734,7 @@ export default function AppNavigation() {
         onApply={async (id) => {
           try {
             await projectsApi.apply(id);
+
             Alert.alert(
               "Inscrição realizada",
               "Sua inscrição foi registrada."
@@ -611,7 +756,7 @@ export default function AppNavigation() {
             : conversations[resident?.id] || []
         }
         send={(_, text) => sendMessage(text)}
-        back={() => setScreen("chat")}
+        back={() => navigate("chat")}
       />
     );
   } else if (screen === "perfil") {
@@ -627,52 +772,286 @@ export default function AppNavigation() {
     );
   } else if (screen === "chat") {
     content = (
-      <View style={{ flex: 1, backgroundColor: colors.bg, padding: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: "800", color: colors.text }}>
-          Minhas conversas
-        </Text>
-
-        <Pressable
-          onPress={() => findResidents()}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#F5F8FF",
+          padding: 20,
+        }}
+      >
+        <View
           style={{
-            backgroundColor: colors.blue,
-            padding: 14,
-            borderRadius: 12,
-            marginTop: 16,
-            marginBottom: 20,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 22,
           }}
         >
-          <Text style={{ color: "white", fontWeight: "700", textAlign: "center" }}>
-            Encontrar residentes
-          </Text>
+          <View>
+            <Text
+              style={{
+                color: "#73809A",
+                fontSize: 10,
+                fontWeight: "700",
+                letterSpacing: 2,
+              }}
+            >
+              SUA COMUNIDADE
+            </Text>
+
+            <Text
+              style={{
+                color: "#102653",
+                fontSize: 28,
+                fontWeight: "800",
+                marginTop: 6,
+              }}
+            >
+              Conversas
+            </Text>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir meu perfil"
+            onPress={() => navigate("perfil")}
+          >
+            <Avatar
+              uri={profile.avatarUrl}
+              name={profile.name}
+              size={48}
+            />
+          </Pressable>
+        </View>
+
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            backgroundColor: "white",
+            borderRadius: 15,
+            paddingHorizontal: 14,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: "#E1E8F3",
+          }}
+        >
+          <Icon name="search-outline" size={20} />
+
+          <TextInput
+            accessibilityLabel="Buscar conversas"
+            placeholder="Buscar uma conversa..."
+            placeholderTextColor="#8794AA"
+            value={chatSearch}
+            onChangeText={setChatSearch}
+            style={{
+              flex: 1,
+              paddingVertical: 14,
+              color: "#102653",
+              fontSize: 15,
+            }}
+          />
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => findResidents()}
+          style={{
+            backgroundColor: "#1754D1",
+            padding: 18,
+            borderRadius: 17,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 24,
+          }}
+        >
+          <Icon
+            name="people-outline"
+            color="white"
+            size={26}
+          />
+
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: "white",
+                fontWeight: "700",
+                fontSize: 15,
+              }}
+            >
+              Encontre novas conexões
+            </Text>
+
+            <Text
+              style={{
+                color: "#D6E3FF",
+                fontSize: 12,
+                marginTop: 5,
+              }}
+            >
+              Converse com brasileiros pelo mundo
+            </Text>
+          </View>
+
+          <Icon
+            name="arrow-forward"
+            color="white"
+            size={21}
+          />
         </Pressable>
 
-        <ScrollView>
-          {savedChats.length === 0 ? (
-            <Text style={{ color: colors.text, marginTop: 20 }}>
-              Você ainda não possui conversas. Encontre um residente para começar!
-            </Text>
-          ) : (
-            savedChats.map((chat) => (
-              <Pressable
-                key={chat.id}
-                onPress={() => openSavedChat(chat)}
+        <Text
+          style={{
+            color: "#102653",
+            fontSize: 16,
+            fontWeight: "700",
+            marginBottom: 15,
+          }}
+        >
+          Suas conversas · {savedChats.length}
+        </Text>
+
+        {loadingChats && (
+          <Text
+            style={{
+              color: "#73809A",
+              marginBottom: 12,
+            }}
+          >
+            Atualizando conversas...
+          </Text>
+        )}
+
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 20 }}
+        >
+          {!filteredChats.length ? (
+            <View
+              style={{
+                backgroundColor: "white",
+                padding: 28,
+                borderRadius: 20,
+                alignItems: "center",
+              }}
+            >
+              <Icon
+                name="chatbubbles-outline"
+                size={40}
+              />
+
+              <Text
                 style={{
-                  backgroundColor: "white",
-                  padding: 16,
-                  borderRadius: 12,
-                  marginBottom: 10,
-                  borderWidth: 1,
-                  borderColor: colors.line,
+                  color: "#102653",
+                  fontSize: 17,
+                  fontWeight: "700",
+                  marginTop: 16,
+                  textAlign: "center",
                 }}
               >
-                <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
-                  {chat.displayTitle || chat.title || "Conversa"}
-                </Text>
+                {chatSearch
+                  ? "Nenhuma conversa encontrada"
+                  : "Sua próxima conexão está aqui"}
+              </Text>
 
-                <Text style={{ color: colors.text, marginTop: 4 }}>
-                  Toque para abrir a conversa
-                </Text>
+              <Text
+                style={{
+                  color: "#73809A",
+                  lineHeight: 22,
+                  textAlign: "center",
+                  marginTop: 10,
+                }}
+              >
+                {chatSearch
+                  ? "Tente buscar por outro nome."
+                  : "Encontre um residente para começar uma conversa."}
+              </Text>
+            </View>
+          ) : (
+            filteredChats.map((chat) => (
+              <Pressable
+                key={chat.id}
+                accessibilityRole="button"
+                onPress={() => openSavedChat(chat)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  backgroundColor: "white",
+                  padding: 16,
+                  borderRadius: 18,
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: "#E5EBF5",
+                }}
+              >
+                <Avatar
+                  uri={chat.avatarUrl}
+                  name={chat.displayTitle || chat.title || ""}
+                  size={52}
+                />
+
+                <View style={{ flex: 1 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 7,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#102653",
+                        fontSize: 16,
+                        fontWeight: "700",
+                        flexShrink: 1,
+                      }}
+                    >
+                      {chat.displayTitle ||
+                        chat.title ||
+                        "Conversa"}
+                    </Text>
+
+                    <Flag
+                      code={chat.residenceCountry}
+                      size={19}
+                    />
+                  </View>
+
+                  {!!chat.residenceCountry && (
+                    <Text
+                      style={{
+                        color: "#73809A",
+                        fontSize: 12,
+                        marginTop: 5,
+                      }}
+                    >
+                      {[
+                        chat.city,
+                        countryName(chat.residenceCountry),
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </Text>
+                  )}
+
+                  <Text
+                    style={{
+                      color: "#73809A",
+                      fontSize: 12,
+                      marginTop: 5,
+                    }}
+                  >
+                    Toque para continuar a conversa
+                  </Text>
+                </View>
+
+                <Icon
+                  name="chevron-forward"
+                  size={18}
+                />
               </Pressable>
             ))
           )}
@@ -691,7 +1070,12 @@ export default function AppNavigation() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.bg,
+      }}
+    >
       <StatusBar style="dark" />
 
       <View style={{ flex: 1 }}>
@@ -703,7 +1087,7 @@ export default function AppNavigation() {
           style={{
             flexDirection: "row",
             borderTopWidth: 1,
-            borderColor: colors.line,
+            borderColor: "#DFE6F2",
             backgroundColor: "white",
             paddingVertical: 10,
           }}
@@ -712,7 +1096,9 @@ export default function AppNavigation() {
             <Pressable
               key={id}
               accessibilityRole="tab"
-              accessibilityState={{ selected: active === id }}
+              accessibilityState={{
+                selected: active === id,
+              }}
               accessibilityLabel={label}
               onPress={() => navigate(id)}
               style={{
@@ -722,21 +1108,49 @@ export default function AppNavigation() {
                 justifyContent: "center",
               }}
             >
-              <Icon
-                name={icon}
-                color={active === id ? colors.blue : colors.text}
-              />
+              {id === "perfil" && profile.avatarUrl ? (
+                <Avatar
+                  uri={profile.avatarUrl}
+                  name={profile.name}
+                  size={26}
+                />
+              ) : (
+                <Icon
+                  name={icon}
+                  color={
+                    active === id
+                      ? "#1754D1"
+                      : "#65738C"
+                  }
+                />
+              )}
 
               <Text
                 style={{
                   fontSize: 11,
                   marginTop: 4,
-                  color: active === id ? colors.blue : colors.text,
-                  fontWeight: active === id ? "700" : "400",
+                  color:
+                    active === id
+                      ? "#1754D1"
+                      : "#65738C",
+                  fontWeight:
+                    active === id ? "700" : "400",
                 }}
               >
                 {label}
               </Text>
+
+              {active === id && (
+                <View
+                  style={{
+                    height: 3,
+                    width: 25,
+                    borderRadius: 3,
+                    backgroundColor: "#1754D1",
+                    marginTop: 5,
+                  }}
+                />
+              )}
             </Pressable>
           ))}
         </View>

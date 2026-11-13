@@ -1,12 +1,6 @@
-
-import { requireBackend } from './supabase';
+import { requireBackend } from "./supabase";
 
 const client = () => requireBackend();
-
-const unwrap = ({ data, error }) => {
-  if (error) throw error;
-  return data;
-};
 
 // ==========================================
 // AUTENTICAÇÃO
@@ -23,10 +17,10 @@ export const authApi = {
         data: {
           name: user.name,
           kind: user.kind,
-          company_name: user.companyName || '',
-          company_country: user.companyCountry || '',
-          origin_country: user.originCountry || '',
-          company_id: user.companyId || '',
+          company_name: user.companyName || "",
+          company_country: user.companyCountry || "",
+          origin_country: user.originCountry || "",
+          company_id: user.companyId || "",
         },
       },
     });
@@ -73,12 +67,15 @@ export const authApi = {
 
   async signOut() {
     const { error } = await client().auth.signOut();
+
     if (error) throw error;
   },
 
   async session() {
     const { data, error } = await client().auth.getSession();
+
     if (error) throw error;
+
     return data.session;
   },
 };
@@ -92,31 +89,31 @@ export const profileApi = {
     const payload = {
       id: user.id,
       email: user.email,
-      name: values.name || user.user_metadata?.name || 'Usuário',
+      name: values.name || user.user_metadata?.name || "Usuário",
       kind:
         values.kind ||
         user.user_metadata?.kind ||
-        'Planejando a mudança',
+        "Planejando a mudança",
       company_name:
         values.companyName ||
         user.user_metadata?.company_name ||
-        '',
+        "",
       company_country:
         values.companyCountry ||
         user.user_metadata?.company_country ||
-        '',
+        "",
       origin_country:
         values.originCountry ||
         user.user_metadata?.origin_country ||
-        '',
+        "",
       company_id:
         values.companyId ||
         user.user_metadata?.company_id ||
-        '',
+        "",
     };
 
     const { data, error } = await client()
-      .from('profiles')
+      .from("profiles")
       .upsert(payload)
       .select()
       .single();
@@ -127,16 +124,21 @@ export const profileApi = {
   },
 
   async getMine() {
+    const sb = client();
+
     const {
       data: { user },
-    } = await client().auth.getUser();
+      error: authError,
+    } = await sb.auth.getUser();
+
+    if (authError) throw authError;
 
     if (!user) return null;
 
-    const { data, error } = await client()
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
+    const { data, error } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
       .maybeSingle();
 
     if (error) throw error;
@@ -145,26 +147,56 @@ export const profileApi = {
   },
 
   async update(values) {
+    const sb = client();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await sb.auth.getUser();
+
+    if (authError) throw authError;
+
+    if (!user) {
+      throw new Error("Entre na sua conta para editar o perfil.");
+    }
+
+    const name = (values.name || "").trim();
+
+    if (!name) {
+      throw new Error("Informe seu nome.");
+    }
+
     const payload = {
-      name: values.name,
+      name,
       kind: values.kind,
-      location: values.location || '',
-      destination: values.destination || '',
-      languages: values.languages || '',
-      bio: values.bio || '',
-      company_name: values.companyName || '',
-      company_country: values.companyCountry || '',
-      origin_country: values.originCountry || '',
-      company_id: values.companyId || '',
-      industry: values.industry || '',
-      website: values.website || '',
-      company_bio: values.companyBio || '',
+      location: values.location || "",
+      destination: values.destination || "",
+      languages: values.languages || "",
+      bio: values.bio || "",
+      company_name: values.companyName || "",
+      company_country: values.companyCountry || "",
+      origin_country: values.originCountry || "",
+      company_id: values.companyId || "",
+      industry: values.industry || "",
+      website: values.website || "",
+      company_bio: values.companyBio || "",
       updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await client()
-      .from('profiles')
+    // Só altera esses campos quando eles forem enviados.
+    // Isso preserva a foto ao editar outros tipos de perfil.
+    if (values.avatarUrl !== undefined) {
+      payload.avatar_url = values.avatarUrl || "";
+    }
+
+    if (values.residenceCountry !== undefined) {
+      payload.residence_country = values.residenceCountry || "";
+    }
+
+    const { data, error } = await sb
+      .from("profiles")
       .update(payload)
+      .eq("id", user.id)
       .select()
       .single();
 
@@ -180,17 +212,19 @@ function mapProfile(p) {
     email: p.email,
     name: p.name,
     kind: p.kind,
-    location: p.location,
-    destination: p.destination,
-    languages: p.languages,
-    bio: p.bio,
-    companyName: p.company_name,
-    companyCountry: p.company_country,
-    originCountry: p.origin_country,
-    companyId: p.company_id,
-    industry: p.industry,
-    website: p.website,
-    companyBio: p.company_bio,
+    avatarUrl: p.avatar_url || "",
+    residenceCountry: p.residence_country || "",
+    location: p.location || "",
+    destination: p.destination || "",
+    languages: p.languages || "",
+    bio: p.bio || "",
+    companyName: p.company_name || "",
+    companyCountry: p.company_country || "",
+    originCountry: p.origin_country || "",
+    companyId: p.company_id || "",
+    industry: p.industry || "",
+    website: p.website || "",
+    companyBio: p.company_bio || "",
   };
 }
 
@@ -201,10 +235,10 @@ function mapProfile(p) {
 export const projectsApi = {
   async list({ mine = false } = {}) {
     let q = client()
-      .from('projects')
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false });
+      .from("projects")
+      .select("*")
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
 
     if (mine) {
       const {
@@ -212,10 +246,12 @@ export const projectsApi = {
       } = await client().auth.getUser();
 
       if (!user) {
-        throw new Error('Entre na sua conta para visualizar seus projetos.');
+        throw new Error(
+          "Entre na sua conta para visualizar seus projetos."
+        );
       }
 
-      q = q.eq('owner_id', user.id);
+      q = q.eq("owner_id", user.id);
     }
 
     const { data, error } = await q;
@@ -237,7 +273,7 @@ export const projectsApi = {
     } = await client().auth.getUser();
 
     if (!user) {
-      throw new Error('Entre na sua conta para publicar projetos.');
+      throw new Error("Entre na sua conta para publicar projetos.");
     }
 
     const payload = {
@@ -247,17 +283,17 @@ export const projectsApi = {
       vacancies: Number(p.vacancies),
       title: p.title,
       description: p.description,
-      requirements: p.requirements || '',
-      benefits: p.benefits || '',
-      contact: p.contact || '',
+      requirements: p.requirements || "",
+      benefits: p.benefits || "",
+      contact: p.contact || "",
       city: p.city,
       state: p.state,
       country: p.country,
-      status: 'published',
+      status: "published",
     };
 
     const { data, error } = await client()
-      .from('projects')
+      .from("projects")
       .insert(payload)
       .select()
       .single();
@@ -274,7 +310,7 @@ export const projectsApi = {
 
   async update(id, patch) {
     const { data, error } = await client()
-      .from('projects')
+      .from("projects")
       .update({
         title: patch.title,
         description: patch.description,
@@ -288,7 +324,7 @@ export const projectsApi = {
         country: patch.country,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -299,14 +335,14 @@ export const projectsApi = {
 
   async remove(id) {
     const { error } = await client()
-      .from('projects')
+      .from("projects")
       .delete()
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw error;
   },
 
-  async apply(projectId, message = '') {
+  async apply(projectId, message = "") {
     const sb = client();
 
     const {
@@ -317,38 +353,40 @@ export const projectsApi = {
     if (authError) throw authError;
 
     if (!user) {
-      throw new Error('Entre na sua conta para se inscrever.');
+      throw new Error("Entre na sua conta para se inscrever.");
     }
 
     const { data: existing, error: findError } = await sb
-      .from('project_applications')
-      .select('*')
-      .eq('project_id', projectId)
-      .eq('user_id', user.id)
+      .from("project_applications")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("user_id", user.id)
       .maybeSingle();
 
     if (findError) throw findError;
 
-    if (existing?.status === 'accepted') {
-      throw new Error('Sua inscrição já foi aceita.');
+    if (existing?.status === "accepted") {
+      throw new Error("Sua inscrição já foi aceita.");
     }
 
     if (
-      existing?.status === 'pending' ||
-      existing?.status === 'reviewing'
+      existing?.status === "pending" ||
+      existing?.status === "reviewing"
     ) {
-      throw new Error('Você já possui uma inscrição neste projeto.');
+      throw new Error(
+        "Você já possui uma inscrição neste projeto."
+      );
     }
 
     if (existing) {
       const { data, error } = await sb
-        .from('project_applications')
+        .from("project_applications")
         .update({
           message,
-          status: 'pending',
+          status: "pending",
           updated_at: new Date().toISOString(),
         })
-        .eq('id', existing.id)
+        .eq("id", existing.id)
         .select()
         .single();
 
@@ -358,12 +396,12 @@ export const projectsApi = {
     }
 
     const { data, error } = await sb
-      .from('project_applications')
+      .from("project_applications")
       .insert({
         project_id: projectId,
         user_id: user.id,
         message,
-        status: 'pending',
+        status: "pending",
       })
       .select()
       .single();
@@ -375,10 +413,10 @@ export const projectsApi = {
 
   async applications(projectId) {
     const { data, error } = await client()
-      .from('project_applications')
-      .select('*, profiles:user_id(name,email)')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false });
+      .from("project_applications")
+      .select("*, profiles:user_id(name,email)")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
@@ -391,14 +429,16 @@ export const projectsApi = {
     } = await client().auth.getUser();
 
     if (!user) {
-      throw new Error('Entre na sua conta para visualizar suas inscrições.');
+      throw new Error(
+        "Entre na sua conta para visualizar suas inscrições."
+      );
     }
 
     const { data, error } = await client()
-      .from('project_applications')
-      .select('*, projects(*)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .from("project_applications")
+      .select("*, projects(*)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
@@ -407,12 +447,12 @@ export const projectsApi = {
 
   async reviewApplication(id, status) {
     const { data, error } = await client()
-      .from('project_applications')
+      .from("project_applications")
       .update({
         status,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -426,17 +466,20 @@ export const projectsApi = {
 // CONVERSAS E MENSAGENS
 // ==========================================
 
-
 export const chatsApi = {
   async create(title, memberIds = []) {
-    const { data: { user } } = await client().auth.getUser();
+    const {
+      data: { user },
+    } = await client().auth.getUser();
 
     if (!user) {
-      throw new Error('Entre na sua conta para criar uma conversa.');
+      throw new Error(
+        "Entre na sua conta para criar uma conversa."
+      );
     }
 
     const { data: chat, error } = await client()
-      .from('chats')
+      .from("chats")
       .insert({
         title,
         created_by: user.id,
@@ -449,9 +492,9 @@ export const chatsApi = {
     const ids = [...new Set([user.id, ...memberIds])];
 
     const { error: memberError } = await client()
-      .from('chat_members')
+      .from("chat_members")
       .insert(
-        ids.map(user_id => ({
+        ids.map((user_id) => ({
           chat_id: chat.id,
           user_id,
         }))
@@ -463,37 +506,43 @@ export const chatsApi = {
   },
 
   async openDirect(otherUserId, title) {
-    const { data: { user } } = await client().auth.getUser();
+    const {
+      data: { user },
+    } = await client().auth.getUser();
 
-    if (!user) throw new Error('Usuário não autenticado.');
+    if (!user) {
+      throw new Error("Usuário não autenticado.");
+    }
 
     if (user.id === otherUserId) {
-      throw new Error('Não é possível conversar consigo mesmo.');
+      throw new Error(
+        "Não é possível conversar consigo mesmo."
+      );
     }
 
     const { data: mine, error: mineError } = await client()
-      .from('chat_members')
-      .select('chat_id')
-      .eq('user_id', user.id);
+      .from("chat_members")
+      .select("chat_id")
+      .eq("user_id", user.id);
 
     if (mineError) throw mineError;
 
-    const ids = (mine || []).map(item => item.chat_id);
+    const ids = (mine || []).map((item) => item.chat_id);
 
     if (ids.length) {
       const { data: shared, error } = await client()
-        .from('chat_members')
-        .select('chat_id')
-        .eq('user_id', otherUserId)
-        .in('chat_id', ids);
+        .from("chat_members")
+        .select("chat_id")
+        .eq("user_id", otherUserId)
+        .in("chat_id", ids);
 
       if (error) throw error;
 
       if (shared?.length) {
         const { data, error: chatError } = await client()
-          .from('chats')
-          .select('*')
-          .eq('id', shared[0].chat_id)
+          .from("chats")
+          .select("*")
+          .eq("id", shared[0].chat_id)
           .single();
 
         if (chatError) throw chatError;
@@ -502,60 +551,81 @@ export const chatsApi = {
       }
     }
 
-    return this.create(title, [otherUserId]);
+    return chatsApi.create(title, [otherUserId]);
   },
 
   async list() {
-    const { data: { user } } = await client().auth.getUser();
+    const {
+      data: { user },
+    } = await client().auth.getUser();
 
-    if (!user) throw new Error('Usuário não autenticado.');
+    if (!user) {
+      throw new Error("Usuário não autenticado.");
+    }
 
     const { data, error } = await client()
-      .from('chat_members')
-      .select('chat:chats(id,title,created_by,created_at)')
-      .eq('user_id', user.id)
-      .order('joined_at', { ascending: false });
+      .from("chat_members")
+      .select("chat:chats(id,title,created_by,created_at)")
+      .eq("user_id", user.id)
+      .order("joined_at", { ascending: false });
 
     if (error) throw error;
 
     return (data || [])
-      .map(item => item.chat)
+      .map((item) => item.chat)
       .filter(Boolean);
   },
 
   async otherMember(chatId) {
-    const { data: { user } } = await client().auth.getUser();
+    const sb = client();
 
-    if (!user) throw new Error('Usuário não autenticado.');
+    const {
+      data: { user },
+      error: authError,
+    } = await sb.auth.getUser();
 
-    const { data: member, error: memberError } = await client()
-      .from('chat_members')
-      .select('user_id')
-      .eq('chat_id', chatId)
-      .neq('user_id', user.id)
+    if (authError) throw authError;
+
+    if (!user) {
+      throw new Error("Usuário não autenticado.");
+    }
+
+    const { data: member, error: memberError } = await sb
+      .from("chat_members")
+      .select("user_id")
+      .eq("chat_id", chatId)
+      .neq("user_id", user.id)
       .maybeSingle();
 
     if (memberError) throw memberError;
 
     if (!member) return null;
 
-    const { data: profile, error: profileError } = await client()
-      .from('profiles')
-      .select('id,name,kind,location,destination')
-      .eq('id', member.user_id)
+    const { data: profile, error: profileError } = await sb
+      .from("profiles")
+      .select(
+        "id,name,kind,location,destination,avatar_url,residence_country"
+      )
+      .eq("id", member.user_id)
       .maybeSingle();
 
     if (profileError) throw profileError;
 
-    return profile;
+    if (!profile) return null;
+
+    return {
+      ...profile,
+      avatarUrl: profile.avatar_url || "",
+      residenceCountry: profile.residence_country || "",
+    };
   },
 
   async messages(chatId) {
     const { data, error } = await client()
-      .from('messages')
-      .select('*, profiles:sender_id(name)')
-      .eq('chat_id', chatId)
-      .order('created_at', { ascending: true });
+      .from("messages")
+      .select("*, profiles:sender_id(name)")
+      .eq("chat_id", chatId)
+      .order("created_at", { ascending: true });
 
     if (error) throw error;
 
@@ -563,16 +633,37 @@ export const chatsApi = {
   },
 
   async send(chatId, body) {
-    const { data: { user } } = await client().auth.getUser();
+    const sb = client();
 
-    if (!user) throw new Error('Usuário não autenticado.');
+    const {
+      data: { user },
+      error: authError,
+    } = await sb.auth.getUser();
 
-    const { data, error } = await client()
-      .from('messages')
+    if (authError) throw authError;
+
+    if (!user) {
+      throw new Error("Usuário não autenticado.");
+    }
+
+    const text = (body || "").trim();
+
+    if (!text) {
+      throw new Error("Escreva uma mensagem antes de enviar.");
+    }
+
+    if (text.length > 5000) {
+      throw new Error(
+        "A mensagem deve ter no máximo 5.000 caracteres."
+      );
+    }
+
+    const { data, error } = await sb
+      .from("messages")
       .insert({
         chat_id: chatId,
         sender_id: user.id,
-        body: body.trim(),
+        body: text,
       })
       .select()
       .single();
@@ -584,14 +675,13 @@ export const chatsApi = {
 
   async deleteMessage(messageId) {
     const { error } = await client()
-      .from('messages')
+      .from("messages")
       .delete()
-      .eq('id', messageId);
+      .eq("id", messageId);
 
     if (error) throw error;
   },
 };
-
 
 // ==========================================
 // DIRETÓRIO DE RESIDENTES
@@ -600,44 +690,38 @@ export const chatsApi = {
 export const residentsApi = {
   async list() {
     const { data, error } = await client()
-      .from('profiles')
-      .select('id,name,location,destination,languages,bio,kind')
-      .eq('kind', 'Residente no exterior')
-      .order('name');
+      .from("profiles")
+      .select(
+        "id,name,location,destination,languages,bio,kind,avatar_url,residence_country"
+      )
+      .eq("kind", "Residente no exterior")
+      .order("name");
 
     if (error) throw error;
+
+    const countryIds = {
+      PT: "portugal",
+      US: "usa",
+      PY: "paraguay",
+      GB: "uk",
+      JP: "japan",
+    };
 
     return (data || []).map((profile) => ({
       id: profile.id,
       name: profile.name,
-      city: profile.location || 'Localização não informada',
-      countryId: countryIdFromText(
-        profile.destination || profile.location || ''
-      ),
-      bio: profile.bio || 'Este residente ainda não adicionou uma apresentação.',
-      destination: profile.destination || '',
-      languages: profile.languages || '',
+      avatarUrl: profile.avatar_url || "",
+      residenceCountry: profile.residence_country || "",
+      city: profile.location || "",
+      countryId: countryIds[profile.residence_country] || null,
+      bio:
+        profile.bio ||
+        "Este residente ainda não adicionou uma apresentação.",
+      destination: profile.destination || "",
+      languages: profile.languages || "",
     }));
   },
 };
-
-function countryIdFromText(value) {
-  const text = String(value).toLocaleLowerCase('pt-BR');
-
-  const aliases = [
-    ['usa', ['estados unidos', 'united states', 'usa', 'eua']],
-    ['portugal', ['portugal']],
-    ['paraguay', ['paraguai', 'paraguay']],
-    ['uk', ['reino unido', 'united kingdom', 'inglaterra', 'uk']],
-    ['japan', ['japão', 'japao', 'japan']],
-  ];
-
-  return (
-    aliases.find(([, names]) =>
-      names.some((name) => text.includes(name))
-    )?.[0] || 'portugal'
-  );
-}
 
 // ==========================================
 // FAVORITOS
@@ -646,12 +730,12 @@ function countryIdFromText(value) {
 export const favoritesApi = {
   async list() {
     const { data, error } = await client()
-      .from('favorites')
-      .select('country_id');
+      .from("favorites")
+      .select("country_id");
 
     if (error) throw error;
 
-    return (data || []).map((x) => x.country_id);
+    return (data || []).map((item) => item.country_id);
   },
 
   async toggle(countryId) {
@@ -662,24 +746,26 @@ export const favoritesApi = {
     } = await sb.auth.getUser();
 
     if (!user) {
-      throw new Error('Entre na sua conta para gerenciar favoritos.');
+      throw new Error(
+        "Entre na sua conta para gerenciar favoritos."
+      );
     }
 
     const { data: existing, error: findError } = await sb
-      .from('favorites')
-      .select('country_id')
-      .eq('user_id', user.id)
-      .eq('country_id', String(countryId))
+      .from("favorites")
+      .select("country_id")
+      .eq("user_id", user.id)
+      .eq("country_id", String(countryId))
       .maybeSingle();
 
     if (findError) throw findError;
 
     if (existing) {
       const { error } = await sb
-        .from('favorites')
+        .from("favorites")
         .delete()
-        .eq('user_id', user.id)
-        .eq('country_id', String(countryId));
+        .eq("user_id", user.id)
+        .eq("country_id", String(countryId));
 
       if (error) throw error;
 
@@ -687,7 +773,7 @@ export const favoritesApi = {
     }
 
     const { error } = await sb
-      .from('favorites')
+      .from("favorites")
       .insert({
         user_id: user.id,
         country_id: String(countryId),
@@ -706,14 +792,14 @@ export const favoritesApi = {
 export const managementApi = {
   async projectAnalytics(projectId = null) {
     let q = client()
-      .from('project_analytics')
-      .select('*');
+      .from("project_analytics")
+      .select("*");
 
     if (projectId) {
-      q = q.eq('project_id', projectId);
+      q = q.eq("project_id", projectId);
     }
 
-    const { data, error } = await q.order('title');
+    const { data, error } = await q.order("title");
 
     if (error) throw error;
 
@@ -721,19 +807,25 @@ export const managementApi = {
   },
 
   async setProjectStatus(projectId, status) {
-    if (
-      !['draft', 'published', 'paused', 'closed', 'archived'].includes(status)
-    ) {
-      throw new Error('Status de projeto inválido.');
+    const allowedStatuses = [
+      "draft",
+      "published",
+      "paused",
+      "closed",
+      "archived",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      throw new Error("Status de projeto inválido.");
     }
 
     const { data, error } = await client()
-      .from('projects')
+      .from("projects")
       .update({
         status,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', projectId)
+      .eq("id", projectId)
       .select()
       .single();
 
@@ -744,12 +836,12 @@ export const managementApi = {
 
   async updateChat(chatId, title) {
     const { data, error } = await client()
-      .from('chats')
+      .from("chats")
       .update({
         title,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', chatId)
+      .eq("id", chatId)
       .select()
       .single();
 
@@ -760,9 +852,9 @@ export const managementApi = {
 
   async deleteChat(chatId) {
     const { error } = await client()
-      .from('chats')
+      .from("chats")
       .delete()
-      .eq('id', chatId);
+      .eq("id", chatId);
 
     if (error) throw error;
   },
@@ -775,26 +867,28 @@ export const managementApi = {
     } = await sb.auth.getUser();
 
     if (!user) {
-      throw new Error('Entre na sua conta para sair da conversa.');
+      throw new Error(
+        "Entre na sua conta para sair da conversa."
+      );
     }
 
     const { error } = await sb
-      .from('chat_members')
+      .from("chat_members")
       .delete()
-      .eq('chat_id', chatId)
-      .eq('user_id', user.id);
+      .eq("chat_id", chatId)
+      .eq("user_id", user.id);
 
     if (error) throw error;
   },
 
   async editMessage(messageId, body) {
     const { data, error } = await client()
-      .from('messages')
+      .from("messages")
       .update({
         body,
         edited_at: new Date().toISOString(),
       })
-      .eq('id', messageId)
+      .eq("id", messageId)
       .select()
       .single();
 
@@ -804,19 +898,24 @@ export const managementApi = {
   },
 
   async updateApplicationStatus(applicationId, status) {
-    if (
-      !['reviewing', 'accepted', 'rejected', 'withdrawn'].includes(status)
-    ) {
-      throw new Error('Status de inscrição inválido.');
+    const allowedStatuses = [
+      "reviewing",
+      "accepted",
+      "rejected",
+      "withdrawn",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      throw new Error("Status de inscrição inválido.");
     }
 
     const { data, error } = await client()
-      .from('project_applications')
+      .from("project_applications")
       .update({
         status,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', applicationId)
+      .eq("id", applicationId)
       .select()
       .single();
 
